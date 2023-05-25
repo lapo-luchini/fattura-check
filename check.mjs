@@ -1,11 +1,13 @@
 #! /usr/bin/env node
 
+// download files from https://dichiarazioneprecompilata.agenziaentrate.gov.it/FattureWeb/#/fatture/elenco
+
 import * as fs from 'node:fs/promises';
 import * as crypto from 'node:crypto';
 import { XMLParser } from 'fast-xml-parser';
 
-const filenameCSV = /fatture-([0-9_-]{10})-([0-9_-]{10}).csv/;
-const filenameMeta = /informazioni_associate_[0-9]+].xml|.*_meta.xml/;
+const filenameCSV = /fatture-([0-9_-]{10})-([0-9_-]{10})[.]csv/;
+const filenameMeta = /informazioni_associate_[0-9]+[.]xml|.*_meta[.]xml/;
 const hash = crypto.createHash('sha256');
 
 function parseDate(s) {
@@ -44,6 +46,7 @@ for (const file of await fs.readdir('.')) {
     m = filenameMeta.exec(file);
     if (m) try { // metadata
         const parser = new XMLParser();
+        // console.log('Read:', file);
         let o = parser.parse(await fs.readFile(file, 'utf8'));
         let meta = {};
         for (const m of o.metadatiFattura.metadato)
@@ -67,12 +70,10 @@ for (const file of await fs.readdir('.')) {
         throw new Error('Invalid metadata file: ' + file);
     }
 }
-// fatture.sort((a, b) => a - b);
-console.log(fatture);
+fatture = Object.fromEntries(Object.entries(fatture).sort((a, b) => a[0] - b[0]));
+// console.log(fatture);
 cover.sort((a, b) => a[0] - b[0]);
-// console.log(cover);
 cover = cover.reduce((acc, val) => {
-    // console.log('red', acc, val);
     if (!Array.isArray(acc[0]))
         acc = [acc];
     const last = acc[acc.length - 1];
@@ -85,15 +86,6 @@ cover = cover.reduce((acc, val) => {
     return acc;
 });
 console.log('Finestra temporale coperta:', cover.map(a => a[0] + '-' + a[1]).join(' '));
-// console.log('Finestra temporale coperta:', cover);
-// if (cover.length > 1) {
-//     let t = null;
-//     for (const r of cover) {
-//         if (t != null)
-//             console.log('Finestra temporale mancante: ' + t + ' - ' + r[0]);
-//         t = r[1];
-//     }
-// }
 let trovate = 0, mancanti = 0;
 for (const e of Object.entries(fatture)) {
     if (e[1].valid === true)
@@ -103,3 +95,7 @@ for (const e of Object.entries(fatture)) {
 }
 console.log('Fatture scaricate:', trovate);
 console.log('Fatture mancanti: ', mancanti);
+if (mancanti > 0)
+    console.log('Mancanti:', Object.entries(fatture).
+        filter(f => f[1].valid !== true && f[1].data > '20210101').
+        map(f => f[0] + ' del ' + f[1].data + ': ' + f[1].valid));
