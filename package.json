@@ -1,0 +1,17 @@
+{
+  "name": "fattura-check",
+  "version": "0.1.0",
+  "description": "Check manual download from private folder.",
+  "main": "check.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lapo-luchini/fattura-check.git"
+  },
+  "keywords": [ "fatturapa", "fatturab2b", "italia" ],
+  "author": "Lapo Luchini <lapo@lapo.it>",
+  "license": "ISC",
+  "bugs": { "url": "https://github.com/lapo-luchini/fattura-check/issues" },
+  "dependencies": {
+    "fast-xml-parser": "^4.2.2"
+  }
+}
